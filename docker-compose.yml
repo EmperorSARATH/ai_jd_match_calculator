@@ -5,9 +5,9 @@ services:
     container_name: ai-postgres
 
     environment:
-      POSTGRES_DB: ai_lab
-      POSTGRES_USER: ai_user
-      POSTGRES_PASSWORD: ai_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
     ports:
       - "5432:5432"
