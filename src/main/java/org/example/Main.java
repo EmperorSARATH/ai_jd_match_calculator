@@ -6,14 +6,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.sql.Connection;
+import java.sql.DriverManager;
+
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
-    private static final String OLLAMA_URL =
-            "http://localhost:11434/api/embeddings";
-
-    private static final String MODEL =
-            "all-minilm";
 
 
     public static void main(String[] args) throws Exception{
@@ -21,8 +19,32 @@ public class Main {
         String text1 = "Java backend developer";
         String text2 = "flutter developer";
 
-        float[] embedding1 = getEmbedding(text1);
-        float[] embedding2 = getEmbedding(text2);
+        String jobDescription = """
+        Java Developer
+        """;
+
+        EmbeddingService embeddingService = new EmbeddingService();
+
+//        String resume = """
+//                 Systems engineer,admin
+//                 dveeloper
+//                """;
+
+        float[] embedding1 = embeddingService.generateEmbedding(text1);
+
+
+
+        float[] embedding2 = embeddingService.generateEmbedding(text2);
+
+        float[] embedding3 = embeddingService.generateEmbedding(jobDescription);
+
+        DatabaseService databaseService = new DatabaseService();
+
+        databaseService.findSimilarCandidates(embedding3);
+
+        System.out.println("Candidate searched!");
+
+
 
         System.out.println("Embedding 1 size: " + embedding1.length);
         System.out.println("Embedding 2 size: " + embedding2.length);
@@ -34,41 +56,7 @@ public class Main {
 
     }
 
-    private static float[] getEmbedding(String text) throws Exception {
 
-        String jsonBody = """
-                {
-                    "model": "%s",
-                    "prompt": "%s"
-                }
-                """.formatted(MODEL, text);
-
-        HttpClient client = HttpClient.newHttpClient();
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(OLLAMA_URL))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                .build();
-
-        HttpResponse<String> response =
-                client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        System.out.println("Ollama response:");
-        System.out.println(response.body());
-
-        return extractEmbedding(response.body());
-    }
-
-    private static float[] extractEmbedding(String response) throws Exception {
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        EmbeddingResponse embeddingResponse =
-                objectMapper.readValue(response, EmbeddingResponse.class);
-
-        return embeddingResponse.embedding;
-    }
     private static double cosineSimilarity(float[] a, float[] b) {
 
         if (a.length != b.length) {
@@ -95,8 +83,4 @@ public class Main {
         return dotProduct / (magnitudeA * magnitudeB);
     }
 
-    static class EmbeddingResponse {
-
-        public float[] embedding;
-    }
 }
